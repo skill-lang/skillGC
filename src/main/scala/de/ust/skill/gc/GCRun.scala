@@ -10,6 +10,7 @@ import de.ust.skill.common.scala.api.FieldType
 import de.ust.skill.common.scala.internal.fieldTypes.SingleBaseTypeContainer
 import de.ust.skill.common.scala.internal.fieldTypes.MapType
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.ListBuffer
 
 /**
  * state of a garbage collection run
@@ -19,12 +20,13 @@ final class GCRun(
     val roots : HashSet[String],
     val printProgress : Boolean,
     val printStatistics : Boolean) {
-  val seen = new HashSet[AnyRef]
-  val todo = new HashSet[SkillObject]
+  val seen = new HashSet[SkillObject]
+  val seenStrings = new HashSet[String]
+  val todo = new ListBuffer[SkillObject]
 
   val types : Map[String, Access[_]] = sf.map(t ⇒ (t.name, t)).toMap
 
-  lazy val totalNodes = sf.filter(_.superName.isEmpty).map(_.size).sum + sf.String.size
+  val totalNodes = sf.filter(_.superName.isEmpty).map(_.size).sum + sf.String.size
 
   // PHASE 1: add root instances
   addRoots
@@ -40,11 +42,11 @@ final class GCRun(
   private def addRoots {
     for (t ← sf) {
       if (roots.contains(t.name)) {
-        todo ++= t.all
+        seen ++= t.all
       }
     }
     // our initial todo list is the set of root objects 
-    seen ++= todo
+    todo ++= seen
     if (printStatistics) {
       println(s"  total nodes: $totalNodes")
       println(s"  roots: ${seen.size}")
@@ -85,7 +87,7 @@ final class GCRun(
     val id = t.typeID
     if (14 == id) {
       // string
-      seen += x
+      seenStrings += x.asInstanceOf[String]
 
     } else if (15 <= id && id <= 19) {
       // linear collection
@@ -105,10 +107,10 @@ final class GCRun(
 
     } else {
       // ref
-      if (!seen(x)) {
-        seen += x
-        if (x.isInstanceOf[SkillObject])
-          todo += x.asInstanceOf[SkillObject]
+      val ref = x.asInstanceOf[SkillObject]
+      if (!seen(ref)) {
+        seen += ref
+        todo += ref
       }
     }
   }
@@ -118,7 +120,7 @@ final class GCRun(
       println(s"  reachable: ${seen.size}")
     }
 
-    for (t ← sf) {
+    for (t ← sf if t.superName.isEmpty) {
       for (x ← t) {
         if (!seen(x)) {
           println("delete: " + x)
@@ -127,7 +129,7 @@ final class GCRun(
       }
     }
     for (s ← sf.String) {
-      if (!seen(s)) {
+      if (!seenStrings(s)) {
         println("delete string (TODO): " + s)
 
       }
