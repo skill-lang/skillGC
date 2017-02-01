@@ -130,8 +130,8 @@ final class GCRun(
     }
     for (s ← sf.String) {
       if (!seenStrings(s)) {
-        println("delete string (TODO): " + s)
-
+        println("delete string: " + s)
+        sf.String.remove(s)
       }
     }
   }
