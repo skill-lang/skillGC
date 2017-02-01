@@ -19,7 +19,7 @@ final object CommandLine {
     statistics : Boolean = false);
 
   val argumentParser = new scopt.OptionParser[GCConfig]("skillGC") {
-      
+
     opt[Unit]('d', "dry-run").optional().action((x, c) ⇒
       c.copy(dryRun = true)).text("do not write results")
 
@@ -52,10 +52,16 @@ final object CommandLine {
         else Write
       );
 
+      val begin = System.nanoTime()
+
       new GCRun(sf, opts.roots, opts.progress, opts.statistics)
 
       if (!opts.dryRun)
         sf.close
+
+      if (opts.statistics) {
+        println(s" finished in ${(System.nanoTime() - begin) * 1e-9} sec")
+      }
 
       println("-done-")
     }

@@ -26,8 +26,6 @@ final class GCRun(
 
   lazy val totalNodes = sf.filter(_.superName.isEmpty).map(_.size).sum + sf.String.size
 
-  val heap = new GraphDump
-
   // PHASE 1: add root instances
   addRoots
 
@@ -36,8 +34,6 @@ final class GCRun(
 
   // PHASE 3: remove unreachable objects
   removeDeadNodes
-
-  heap.close
 
   // implementation \\
 
@@ -57,7 +53,7 @@ final class GCRun(
 
   private def processNodes {
     if (printProgress)
-      print("processing")
+      print("collecting")
 
     var processedNodes = 0
     while (!todo.isEmpty) {
@@ -76,7 +72,7 @@ final class GCRun(
       for (f ← t.allFields if !ignoreType(f.t)) {
         val v = f.getR(node).asInstanceOf[AnyRef];
         if (null != v) {
-          processObject(f.t, v, node.toString())
+          processObject(f.t, v)
         }
       }
     }
@@ -85,18 +81,17 @@ final class GCRun(
       println("done")
   }
 
-  private def processObject(t : FieldType[_], x : AnyRef, from : String) {
+  private def processObject(t : FieldType[_], x : AnyRef) {
     val id = t.typeID
     if (14 == id) {
       // string
       seen += x
-      heap.edge(from, x.toString())
 
     } else if (15 <= id && id <= 19) {
       // linear collection
       val bt = t.asInstanceOf[SingleBaseTypeContainer[_, _]].groundType
       for (i ← x.asInstanceOf[Iterable[_ <: AnyRef]])
-        processObject(bt, i, from)
+        processObject(bt, i)
 
     } else if (20 == id) {
       // map
@@ -104,15 +99,14 @@ final class GCRun(
       val followKey = !ignoreType(mt.keyType)
       val followVal = !ignoreType(mt.valueType)
       for (i ← x.asInstanceOf[HashMap[_, _]]) {
-        if (followKey) processObject(mt.keyType, i._1.asInstanceOf[AnyRef], from)
-        if (followVal) processObject(mt.valueType, i._2.asInstanceOf[AnyRef], from)
+        if (followKey) processObject(mt.keyType, i._1.asInstanceOf[AnyRef])
+        if (followVal) processObject(mt.valueType, i._2.asInstanceOf[AnyRef])
       }
 
     } else {
       // ref
       if (!seen(x)) {
         seen += x
-        heap.edge(from, x.toString())
         if (x.isInstanceOf[SkillObject])
           todo += x.asInstanceOf[SkillObject]
       }
