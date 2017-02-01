@@ -1,26 +1,34 @@
 package de.ust.skill.gc
 
-import scala.collection.mutable.ArrayBuffer
 import java.io.File
 
-object CommandLine {
+import scala.collection.mutable.ArrayBuffer
+import de.ust.skill.gc.api.SkillFile
+import de.ust.skill.common.scala.api.Read
+import de.ust.skill.common.scala.api.ReadOnly
+import de.ust.skill.common.scala.api.Write
+import scala.collection.mutable.HashSet
+
+final object CommandLine {
   case class GCConfig(
     targets : ArrayBuffer[File] = new ArrayBuffer,
-    roots : ArrayBuffer[String] = new ArrayBuffer,
+    roots : HashSet[String] = new HashSet,
+    dumpGraph : String = null,
     dryRun : Boolean = false,
     progress : Boolean = false,
     statistics : Boolean = false);
 
   val argumentParser = new scopt.OptionParser[GCConfig]("skillGC") {
-
+      
     opt[Unit]('d', "dry-run").optional().action((x, c) ⇒
       c.copy(dryRun = true)).text("do not write results")
 
-    opt[String]('p', "progress").unbounded().action((x, c) ⇒
+    opt[Unit]('p', "progress").unbounded().action((x, c) ⇒
       c.copy(progress = true)).text("print progress while collecting")
 
-    opt[String]('r', "root").unbounded().action((x, c) ⇒
-      c.copy(statistics = true)).text("add a type as gc root")
+    opt[String]('r', "root").unbounded().action { (x, c) ⇒
+      c.roots += x.toLowerCase; c
+    }.text("add a type as gc root")
 
     opt[Unit]('s', "statistics").optional().action((x, c) ⇒
       c.copy(statistics = true)).text("print garbage statistics")
@@ -33,13 +41,23 @@ object CommandLine {
   }
 
   def main(args : Array[String]) : Unit = {
-    val opts = GCConfig()
-    argumentParser.parse(args, opts)
-
-    process(opts)
+    argumentParser.parse(args, GCConfig()).foreach(process)
   }
 
   private def process(opts : GCConfig) {
-    // TODO
+    for (f ← opts.targets) {
+      println(s"processing $f...")
+      val sf = SkillFile.open(f, Read,
+        if (opts.dryRun) ReadOnly
+        else Write
+      );
+
+      new GCRun(sf, opts.roots, opts.progress, opts.statistics)
+
+      if (!opts.dryRun)
+        sf.close
+
+      println("-done-")
+    }
   }
 }
