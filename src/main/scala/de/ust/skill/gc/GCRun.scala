@@ -123,14 +123,16 @@ final class GCRun(
     for (t ← sf if t.superName.isEmpty) {
       for (x ← t) {
         if (!seen(x)) {
-          println("delete: " + x)
+          if (printProgress)
+            println("delete: " + x)
           sf.delete(x)
         }
       }
     }
     for (s ← sf.String) {
       if (!seenStrings(s)) {
-        println("delete string: " + s)
+        if (printProgress)
+          println("delete string: " + s)
         sf.String.remove(s)
       }
     }
