@@ -13,26 +13,27 @@ libraryDependencies ++= Seq(
 	"org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 )
 
-exportJars := true
+lazy val root = (project in file(".")).
+  enablePlugins(BuildInfoPlugin).
+  settings(
+    assemblyJarName in assembly := "skillgc.jar",
+    test in assembly := {},
+    exportJars := true,
 
-mainClass := Some("de.ust.skill.gc.CommandLine")
+    mainClass := Some("de.ust.skill.gc.CommandLine"),
 
-(testOptions in Test) += Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/tests")
+    (testOptions in Test) += Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/tests"),
 
-libraryDependencies += "commons-lang" % "commons-lang" % "2.6"
+    libraryDependencies += "commons-lang" % "commons-lang" % "2.6",
 
-libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
+    libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.0",
 
-libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0"
+    libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0"
 
 
-buildInfoSettings
+      ).
+  settings(
+    buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
+    buildInfoPackage := "de.ust.skill",
+  )
 
-sourceGenerators in Compile <+= buildInfo
-
-buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion)
-
-buildInfoPackage := "de.ust.skill"
-
-assemblyJarName in assembly := "skillgc.jar"
-test in assembly := {}

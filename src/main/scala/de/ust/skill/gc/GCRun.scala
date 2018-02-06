@@ -69,12 +69,14 @@ final class GCRun(
       }
 
       // visit all fields of that node
-      var t = types(node.getTypeName)
+      if(null != node && null != node.getTypeName) {
+        var t = types(node.getTypeName)
 
-      for (f ← t.allFields if !ignoreType(f.t)) {
-        val v = f.getR(node).asInstanceOf[AnyRef];
-        if (null != v) {
-          processObject(f.t, v)
+        for (f ← t.allFields if !ignoreType(f.t)) {
+          val v = f.getR(node).asInstanceOf[AnyRef];
+          if (null != v) {
+            processObject(f.t, v)
+          }
         }
       }
     }
