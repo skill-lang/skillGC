@@ -33,3 +33,6 @@ sourceGenerators in Compile <+= buildInfo
 buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion)
 
 buildInfoPackage := "de.ust.skill"
+
+assemblyJarName in assembly := "skillgc.jar"
+test in assembly := {}
