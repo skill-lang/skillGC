@@ -16,10 +16,10 @@ import scala.collection.mutable.ListBuffer
  * state of a garbage collection run
  */
 final class GCRun(
-    val sf : SkillFile,
-    val roots : HashSet[String],
-    val printProgress : Boolean,
-    val printStatistics : Boolean) {
+  val sf :              SkillFile,
+  val roots :           HashSet[String],
+  val printProgress :   Boolean,
+  val printStatistics : Boolean) {
   val seen = new HashSet[SkillObject]
   val seenStrings = new HashSet[String]
   val todo = new ListBuffer[SkillObject]
@@ -45,7 +45,7 @@ final class GCRun(
         seen ++= t.all
       }
     }
-    // our initial todo list is the set of root objects 
+    // our initial todo list is the set of root objects
     todo ++= seen
     if (printStatistics) {
       println(s"  total nodes: $totalNodes")
@@ -69,14 +69,12 @@ final class GCRun(
       }
 
       // visit all fields of that node
-      if(null != node && null != node.getTypeName) {
-        var t = types(node.getTypeName)
+      var t = types(node.getTypeName)
 
-        for (f ← t.allFields if !ignoreType(f.t)) {
-          val v = f.getR(node).asInstanceOf[AnyRef];
-          if (null != v) {
-            processObject(f.t, v)
-          }
+      for (f ← t.allFields if !ignoreType(f.t)) {
+        val v = f.getR(node).asInstanceOf[AnyRef];
+        if (null != v) {
+          processObject(f.t, v)
         }
       }
     }
@@ -110,7 +108,7 @@ final class GCRun(
     } else {
       // ref
       val ref = x.asInstanceOf[SkillObject]
-      if (!seen(ref)) {
+      if (null != ref && !seen(ref)) {
         seen += ref
         todo += ref
       }
