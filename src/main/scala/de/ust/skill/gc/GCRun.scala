@@ -64,7 +64,7 @@ final class GCRun(
 
       if (printProgress) {
         processedNodes += 1
-        if (0 == processedNodes % (totalNodes / 10))
+        if (totalNodes > 10 && (0 == processedNodes % (totalNodes / 10)))
           print(".")
       }
 
